@@ -10,18 +10,23 @@ Personal collection of Claude Code plugins.
 
 ## Install
 
-Add this repository as a marketplace, then install a plugin from it:
+In Claude Code:
 
 ```
-/plugin marketplace add /path/to/claude-plugins
+/plugin marketplace add Antriksh29071989/claude-plugins
 /plugin install architect@antriksh-plugins
 ```
 
-To try a plugin without installing it:
+To try a plugin from a local clone without installing it:
 
 ```
 claude --plugin-dir ./plugins/architect
 ```
+
+## Examples
+
+- [gemini-cli, X-rayed](https://antriksh29071989.github.io/claude-plugins/xray/gemini-cli/) - output of `/architect:xray` on Google's Gemini CLI
+- [Production ReAct agent](docs/architecture/production-react-agent/README.md) - output of `/architect:design`
 
 ## Layout
 

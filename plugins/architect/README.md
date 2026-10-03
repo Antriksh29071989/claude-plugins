@@ -12,6 +12,8 @@ A Claude Code plugin with two architecture skills:
 /architect:xray ./path/to/local/repo
 ```
 
+Example: [gemini-cli, X-rayed](https://antriksh29071989.github.io/claude-plugins/xray/gemini-cli/).
+
 It clones the repository (history only, no file contents until needed), measures its git history, reads the code, and produces `xray/<project>/index.html`: one self-contained page with
 
 - the architecture style and patterns in use, each with the files that show it;
