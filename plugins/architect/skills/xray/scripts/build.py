@@ -6,12 +6,27 @@ Usage: build.py <xray.json> <output.html>
 Exits non-zero with a list of problems if the data does not match the schema
 described in references/report-schema.md.
 """
+import html
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
+import time
 
-TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "template.html")
+ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets")
+TEMPLATE = os.path.join(ASSETS, "template.html")
+CARD_TEMPLATE = os.path.join(ASSETS, "card-template.html")
+CARD_SIZE = (1200, 630)
+BROWSERS = (
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+    "google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "microsoft-edge",
+)
 CONFIDENCE = {"documented", "inferred", "speculative"}
 LEVELS = {"Context", "Container", "Component", "Flow", "Data", "Deployment"}
 DIAGRAM_KINDS = ("flowchart", "graph", "sequenceDiagram", "erDiagram", "classDiagram", "stateDiagram")
@@ -31,6 +46,14 @@ def check(data):
     for k in ("name", "tagline", "commit", "analysed_at"):
         need(meta, k, str, "meta")
     need(data, "thesis", str, "root")
+    hook = meta.get("hook")
+    if hook is not None and (not isinstance(hook, str) or len(hook) > 110):
+        errors.append("meta.hook: optional string of at most 110 characters")
+    site = meta.get("site_url")
+    if site is not None and not (isinstance(site, str) and site.startswith("https://")):
+        errors.append("meta.site_url: optional, must start with https://")
+    elif not site:
+        warnings.append("meta.site_url not set: link previews need the page's public URL to find the card image")
 
     for i, s in enumerate(need(data, "stats", list, "root") or []):
         need(s, "label", str, f"stats[{i}]")
@@ -111,6 +134,111 @@ def check(data):
     return errors, warnings
 
 
+def plain(text):
+    """Strip the backtick code markers used in the data file."""
+    return str(text or "").replace("`", "")
+
+
+def find_browser():
+    for candidate in BROWSERS:
+        path = candidate if os.path.isabs(candidate) else shutil.which(candidate)
+        if path and os.path.exists(path):
+            return path
+    return None
+
+
+def write_card(data, out_dir):
+    """Render the 1200x630 share card. Returns the PNG path, or None if no browser is available."""
+    meta = data["meta"]
+    name = plain(meta["name"])
+    size = 124 if len(name) <= 12 else 100 if len(name) <= 18 else 78 if len(name) <= 26 else 60
+    repo = re.sub(r"^https://", "", meta.get("url") or "")
+    stats = "".join(
+        f"<div class=\"stat\"><b>{html.escape(plain(s['value']))}</b>"
+        f"<span class=\"mono\">{html.escape(plain(s['label']))}</span></div>"
+        for s in data["stats"][:4]
+    )
+    with open(CARD_TEMPLATE, encoding="utf-8") as f:
+        card = f.read()
+    for key, value in {
+        "__CARD_NAME_SIZE__": str(size),
+        "__CARD_NAME__": html.escape(name),
+        "__CARD_REPO__": html.escape(repo),
+        "__CARD_HOOK__": html.escape(plain(meta.get("hook") or meta["tagline"])),
+        "__CARD_STATS__": stats,
+    }.items():
+        card = card.replace(key, value)
+    card_html = os.path.join(out_dir, "card.html")
+    card_png = os.path.join(out_dir, "card.png")
+    with open(card_html, "w", encoding="utf-8") as f:
+        f.write(card)
+
+    browser = find_browser()
+    if not browser:
+        print("warning: no Chrome-family browser found; card.html written but card.png was not rendered",
+              file=sys.stderr)
+        return None
+    if os.path.exists(card_png):
+        os.remove(card_png)
+    profile = tempfile.mkdtemp(prefix="xray-card-")
+    proc = subprocess.Popen(
+        [browser, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run",
+         "--force-device-scale-factor=1", f"--user-data-dir={profile}",
+         f"--window-size={CARD_SIZE[0]},{CARD_SIZE[1]}", f"--screenshot={card_png}",
+         "file://" + os.path.abspath(card_html)],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    # Headless Chrome does not always exit after a screenshot, so wait for the file, not the process.
+    deadline = time.time() + 40
+    while time.time() < deadline and not (os.path.exists(card_png) and os.path.getsize(card_png) > 0):
+        if proc.poll() is not None:
+            break
+        time.sleep(0.5)
+    time.sleep(0.5)
+    if proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+    shutil.rmtree(profile, ignore_errors=True)
+    if os.path.exists(card_png) and os.path.getsize(card_png) > 0:
+        return card_png
+    print("warning: the browser did not produce card.png", file=sys.stderr)
+    return None
+
+
+def head_tags(data, has_card):
+    """Static link-preview tags. Crawlers do not run scripts, so these cannot come from the page's JS."""
+    meta = data["meta"]
+    title = f"{plain(meta['name'])} - Architecture X-ray"
+    desc = plain(meta.get("hook") or meta["tagline"])
+    site = (meta.get("site_url") or "").rstrip("/")
+    tags = [
+        ("name", "description", desc),
+        ("property", "og:type", "article"),
+        ("property", "og:title", title),
+        ("property", "og:description", desc),
+        ("name", "twitter:title", title),
+        ("name", "twitter:description", desc),
+    ]
+    if site:
+        tags.append(("property", "og:url", site + "/"))
+    if has_card:
+        image = f"{site}/card.png" if site else "card.png"
+        tags += [
+            ("property", "og:image", image),
+            ("property", "og:image:width", str(CARD_SIZE[0])),
+            ("property", "og:image:height", str(CARD_SIZE[1])),
+            ("property", "og:image:alt", f"{title}: {desc}"),
+            ("name", "twitter:card", "summary_large_image"),
+            ("name", "twitter:image", image),
+        ]
+    return "\n".join(
+        f'<meta {kind}="{key}" content="{html.escape(value, quote=True)}">' for kind, key, value in tags
+    )
+
+
 def main():
     if len(sys.argv) != 3:
         sys.exit(__doc__)
@@ -125,16 +253,23 @@ def main():
             print(f"error: {e}", file=sys.stderr)
         sys.exit(1)
 
+    out_dir = os.path.dirname(os.path.abspath(out))
+    os.makedirs(out_dir, exist_ok=True)
+    card = write_card(data, out_dir)
+
     with open(TEMPLATE, encoding="utf-8") as f:
-        html = f.read()
+        page = f.read()
     payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
     title = re.sub(r"[<>&]", "", data["meta"]["name"])
-    html = html.replace("__XRAY_TITLE__", title).replace("__XRAY_DATA__", payload)
-    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    page = (page.replace("__XRAY_TITLE__", title)
+                .replace("__XRAY_HEAD__", head_tags(data, card is not None))
+                .replace("__XRAY_DATA__", payload))
     with open(out, "w", encoding="utf-8") as f:
-        f.write(html)
-    print(f"wrote {out} ({len(html) // 1024} KB, {len(data['diagrams'])} diagrams, "
+        f.write(page)
+    print(f"wrote {out} ({len(page) // 1024} KB, {len(data['diagrams'])} diagrams, "
           f"{len(data['decisions'])} decisions, {len(data['evolution'])} eras)")
+    if card:
+        print(f"wrote {card} ({CARD_SIZE[0]}x{CARD_SIZE[1]} share card)")
 
 
 if __name__ == "__main__":

@@ -103,6 +103,8 @@ Give 3-5 strengths and 3-5 risks or costs. Be specific and fair: tie each to som
 1. Write the data file to `xray/<project-name>/xray.json` in the user's current working directory (or the location they named), following `references/report-schema.md`.
 2. Render: `python3 scripts/build.py xray/<project-name>/xray.json xray/<project-name>/index.html`
 3. Fix every error the build reports and review its warnings. Re-run until clean.
+
+The build also writes `card.png`, a 1200x630 share card, and puts link-preview tags in the page so the link unfurls with that image on LinkedIn, Slack and similar. It needs a Chrome-family browser installed; without one it writes `card.html` only and says so. Set `meta.hook` to the most interesting finding as a headline. Set `meta.site_url` only if the user says where the page will be published (the preview image must be an absolute URL); otherwise leave it out and mention that previews need it. Look at `card.png` after building and shorten the hook if it runs past three lines.
 4. Re-read the data once more for accuracy: every file path exists at the analysed commit, every link was actually opened, every date and number comes from the history data or a source.
 
 Finish in chat with: the path to `index.html`, the project's architecture in two sentences, the most interesting decision you found, and what was not examined or could not be verified. Offer to open the page.

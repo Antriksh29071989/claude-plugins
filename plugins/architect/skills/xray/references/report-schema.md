@@ -17,6 +17,8 @@
     "name": "project-name",
     "url": "https://github.com/owner/project-name",
     "tagline": "What it is, in one line.",
+    "hook": "The single most interesting finding, as a headline of at most 110 characters.",
+    "site_url": "https://<user>.github.io/<repo>/xray/project-name/",
     "commit": "full or short HEAD sha",
     "analysed_at": "YYYY-MM-DD"
   },
@@ -89,7 +91,9 @@ Field notes:
 
 | Field | Rule |
 |---|---|
-| `stats` | 4-8 items, values as short strings, taken from `history.json` or commands you ran |
+| `meta.hook` | Optional. Headline for the share card and link preview; falls back to `tagline`. Lead with the finding, not a description of the project |
+| `meta.site_url` | Optional. The public URL the page will be served from. Link previews need it to locate the card image; leave it out if the page will not be published |
+| `stats` | 4-8 items; the first four appear on the share card, values as short strings, taken from `history.json` or commands you ran |
 | `patterns[].kind` | `style`, `pattern` or `principle` |
 | `diagrams[].level` | `Context`, `Container`, `Component`, `Flow`, `Data` or `Deployment`; at least one `Container` |
 | `decisions[].confidence` | `documented`, `inferred` or `speculative`; `documented` needs an evidence item with a `url` |

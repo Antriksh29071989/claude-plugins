@@ -4,7 +4,9 @@
   "url": "https://github.com/google-gemini/gemini-cli",
   "tagline": "Google's open-source terminal coding agent for Gemini models.",
   "commit": "fb972b2f87fe7d5b06d37eac711490162d98de2c",
-  "analysed_at": "2026-10-03"
+  "analysed_at": "2026-10-03",
+  "hook": "A headless agent engine, five front ends, and a year spent pulling the loop back into the core.",
+  "site_url": "https://antriksh29071989.github.io/claude-plugins/xray/gemini-cli/"
  },
  "thesis": "A headless agent engine (`packages/core`) with several thin front ends around it. The engine streams typed events from one model round trip and leaves the caller to run tools and continue the loop, which made it easy to add a terminal UI, a headless mode, an editor protocol, an SDK and an agent server. The cost is that the loop is driven from five places, and the last year of the history is largely the work of pulling that, and tool safety, back into the core.",
  "stats": [

@@ -1,6 +1,6 @@
 {
   "name": "architect",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Software architecture toolkit. /architect:design proposes 2-3 contrasting designs for a problem with C4 diagrams, grounded in the architecture literature and industry precedent. /architect:xray reverse-engineers an existing repository into an HTML case study: patterns, key design decisions and why, and how the architecture evolved.",
   "author": {
     "name": "Antriksh"
