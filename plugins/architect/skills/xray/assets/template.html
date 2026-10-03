@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__XRAY_TITLE__ - Architecture X-ray</title>
+<style>
+:root {
+  --bg: #f5f3ee; --surface: #ffffff; --surface-2: #faf9f6; --ink: #151a22; --muted: #5a6473;
+  --line: #e0dcd2; --accent: #0a66c2; --accent-soft: #e4effa; --accent-ink: #084f96;
+  --hero: #0a1120; --hero-2: #101b33; --hero-ink: #eaf1fb; --hero-muted: #93a5c1; --hero-line: rgba(120,160,220,.16);
+  --ok: #17794a; --ok-soft: #e2f3ea; --warn: #9a5a00; --warn-soft: #fbefd9; --spec: #6b4fd0; --spec-soft: #ece7fb;
+  --risk: #b3402e; --risk-soft: #fbe9e5;
+  --d-person: #0b3d75; --d-system: #0a66c2; --d-component: #5aa2e6; --d-ext: #7c8696; --d-store: #17794a; --d-queue: #9a5a00;
+  --d-on: #ffffff; --d-on-light: #0a1120; --d-line: #6b7686; --d-group: #f0ede6; --d-group-line: #b9b3a5;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c111b; --surface: #131a27; --surface-2: #171f2e; --ink: #e6ecf5; --muted: #98a4b7;
+    --line: #253044; --accent: #6db3ff; --accent-soft: #15273f; --accent-ink: #9bcbff;
+    --hero: #070c17; --hero-2: #0e172b;
+    --ok: #5fd39a; --ok-soft: #12301f; --warn: #f0b458; --warn-soft: #33260e; --spec: #b3a1ff; --spec-soft: #241d44;
+    --risk: #ff9482; --risk-soft: #3a1a15;
+    --d-person: #9bcbff; --d-system: #3d8fe6; --d-component: #1f4f86; --d-ext: #4a5568; --d-store: #2a9d68; --d-queue: #c98a2b;
+    --d-on: #ffffff; --d-on-light: #0a1120; --d-line: #8b98ad; --d-group: #172133; --d-group-line: #3a4860;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font: .86em var(--mono); background: var(--accent-soft); color: var(--accent-ink); padding: .1em .38em; border-radius: 4px; overflow-wrap: anywhere; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+.hero { background:
+    linear-gradient(var(--hero-line) 1px, transparent 1px) 0 0 / 100% 32px,
+    linear-gradient(90deg, var(--hero-line) 1px, transparent 1px) 0 0 / 32px 100%,
+    radial-gradient(1200px 500px at 15% -10%, #17366b 0%, transparent 60%),
+    linear-gradient(180deg, var(--hero) 0%, var(--hero-2) 100%);
+  color: var(--hero-ink); padding: 56px 0 44px; }
+.kicker { font: 600 12px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase; color: #7fb7ff; margin: 0 0 18px; }
+.hero h1 { font-size: clamp(34px, 6vw, 60px); line-height: 1.04; letter-spacing: -.025em; margin: 0 0 14px; font-weight: 700; overflow-wrap: anywhere; }
+.tagline { font-size: clamp(17px, 2.3vw, 21px); color: var(--hero-muted); margin: 0 0 26px; max-width: 46em; }
+.thesis { font-size: 17px; max-width: 50em; margin: 0 0 30px; padding-left: 16px; border-left: 3px solid #4d9bf0; color: var(--hero-ink); }
+.thesis code, .tagline code { background: rgba(120,170,240,.16); color: #cfe3ff; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--hero-line); border: 1px solid var(--hero-line); border-radius: 10px; overflow: hidden; }
+.stat { background: rgba(10,17,32,.72); padding: 14px 16px; }
+.stat b { display: block; font: 600 22px/1.2 var(--sans); letter-spacing: -.01em; }
+.stat span { font: 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--hero-muted); }
+.meta { margin-top: 18px; font: 12px/1.6 var(--mono); color: var(--hero-muted); overflow-wrap: anywhere; }
+.meta a { color: #9bcbff; }
+
+nav { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; gap: 20px; overflow-x: auto; padding-top: 11px; padding-bottom: 11px; scrollbar-width: none; }
+nav a { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+nav a:hover { color: var(--accent); text-decoration: none; }
+
+section { padding: 52px 0 8px; }
+h2 { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -.02em; line-height: 1.15; margin: 0 0 6px; }
+.sub { color: var(--muted); margin: 0 0 26px; max-width: 46em; }
+.num { font: 600 12px/1 var(--mono); letter-spacing: .14em; color: var(--accent); display: block; margin-bottom: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+h3 { font-size: 18px; line-height: 1.3; margin: 0 0 8px; letter-spacing: -.01em; }
+p { margin: 0 0 10px; }
+.card p:last-child { margin-bottom: 0; }
+.tag { display: inline-block; font: 600 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 5px 8px; border-radius: 5px; background: var(--accent-soft); color: var(--accent-ink); margin-bottom: 10px; }
+.tag.documented { background: var(--ok-soft); color: var(--ok); }
+.tag.inferred { background: var(--warn-soft); color: var(--warn); }
+.tag.speculative { background: var(--spec-soft); color: var(--spec); }
+.tag.plain { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.evidence { list-style: none; margin: 12px 0 0; padding: 10px 0 0; border-top: 1px dashed var(--line); font: 12.5px/1.6 var(--mono); color: var(--muted); }
+.evidence li { overflow-wrap: anywhere; padding-left: 14px; position: relative; }
+.evidence li::before { content: "\2192"; position: absolute; left: 0; color: var(--accent); }
+
+.diagram { padding: 0; overflow: hidden; margin-bottom: 18px; }
+.diagram header { padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+.diagram header p { color: var(--muted); margin: 0; }
+.canvas { padding: 22px 16px; overflow-x: auto; text-align: center; background: var(--surface-2); }
+.canvas svg { max-width: 100%; height: auto; }
+.canvas svg .edgeLabel, .canvas svg .edgeLabel p, .canvas svg .edgeLabel span { color: var(--ink) !important; fill: var(--ink) !important; background-color: var(--surface-2) !important; font-size: 12.5px; }
+.canvas svg .cluster-label, .canvas svg .cluster-label p, .canvas svg .cluster-label span { color: var(--muted) !important; fill: var(--muted) !important; }
+.canvas pre { text-align: left; font: 12.5px/1.5 var(--mono); color: var(--muted); margin: 0; white-space: pre-wrap; }
+.note { font: 12.5px/1.5 var(--mono); color: var(--warn); margin: 0 0 10px; text-align: left; }
+details.src { border-top: 1px solid var(--line); padding: 10px 20px; font: 12px/1.5 var(--mono); color: var(--muted); }
+details.src summary { cursor: pointer; }
+details.src pre { white-space: pre-wrap; margin: 10px 0 4px; overflow-wrap: anywhere; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font: 12px/1 var(--mono); color: var(--muted); margin: 0 0 18px; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 0 12px 10px 0; border-bottom: 1px solid var(--line); }
+td { padding: 11px 12px 11px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+
+.decision { display: grid; grid-template-columns: 54px 1fr; gap: 4px 16px; margin-bottom: 16px; }
+.decision .idx { font: 700 30px/1 var(--mono); color: var(--line); padding-top: 4px; }
+.decision dl { margin: 6px 0 0; display: grid; grid-template-columns: 96px 1fr; gap: 8px 14px; }
+.decision dt { font: 600 11px/1.9 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.decision dd { margin: 0; }
+.when { font: 12px var(--mono); color: var(--muted); margin-left: 8px; }
+
+.timeline { position: relative; margin-left: 8px; padding-left: 28px; border-left: 2px solid var(--line); }
+.era { position: relative; margin-bottom: 18px; }
+.era::before { content: ""; position: absolute; left: -36px; top: 22px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 3px solid var(--bg); box-shadow: 0 0 0 2px var(--accent); }
+.period { font: 600 12.5px/1 var(--mono); letter-spacing: .08em; color: var(--accent); display: block; margin-bottom: 8px; }
+.era ul { margin: 8px 0 10px; padding-left: 18px; }
+.era li { margin-bottom: 3px; }
+.why { background: var(--surface-2); border-left: 3px solid var(--accent); padding: 9px 12px; border-radius: 0 6px 6px 0; margin: 10px 0 0; }
+.why b { font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
+
+.col h3.head { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 12px; }
+.col.s h3.head { color: var(--ok); } .col.r h3.head { color: var(--risk); }
+.point { border-left: 3px solid var(--ok); background: var(--surface); border-radius: 0 10px 10px 0; padding: 14px 16px; margin-bottom: 12px; border-top: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.col.r .point { border-left-color: var(--risk); }
+.point h4 { margin: 0 0 4px; font-size: 16px; }
+.point p { margin: 0; color: var(--muted); }
+
+.takeaways { counter-reset: t; list-style: none; padding: 0; margin: 0; }
+.takeaways li { counter-increment: t; position: relative; padding: 14px 0 14px 46px; border-bottom: 1px solid var(--line); font-size: 17px; }
+.takeaways li:last-child { border-bottom: 0; }
+.takeaways li::before { content: counter(t, decimal-leading-zero); position: absolute; left: 0; top: 17px; font: 600 13px var(--mono); color: var(--accent); }
+
+footer { margin-top: 56px; padding: 28px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
+footer ul { padding-left: 18px; margin: 8px 0 14px; }
+footer .gen { font: 12px var(--mono); }
+@media (max-width: 560px) {
+  .decision { grid-template-columns: 1fr; } .decision .idx { font-size: 20px; }
+  .decision dl { grid-template-columns: 1fr; gap: 2px; } .decision dd { margin-bottom: 8px; }
+  td:first-child { white-space: normal; }
+}
+@media print { nav { display: none; } .card, .point { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="application/json" id="xray-data">__XRAY_DATA__</script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var data = JSON.parse(document.getElementById("xray-data").textContent);
+  var app = document.getElementById("app");
+
+  // Every string from the data file reaches the page through text nodes only.
+  function rich(text) {
+    var frag = document.createDocumentFragment();
+    String(text == null ? "" : text).split("`").forEach(function (part, i) {
+      if (i % 2) { var c = document.createElement("code"); c.textContent = part; frag.appendChild(c); }
+      else if (part) frag.appendChild(document.createTextNode(part));
+    });
+    return frag;
+  }
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") el.className = attrs[k]; else el.setAttribute(k, attrs[k]);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      var c = arguments[i];
+      if (c == null || c === false) continue;
+      if (Array.isArray(c)) c.forEach(function (x) { if (x) el.appendChild(x); });
+      else el.appendChild(typeof c === "string" ? rich(c) : c);
+    }
+    return el;
+  }
+  function safeUrl(u) { return typeof u === "string" && u.indexOf("https://") === 0 ? u : null; }
+  function evidence(items) {
+    if (!items || !items.length) return null;
+    return h("ul", { class: "evidence" }, items.map(function (e) {
+      if (typeof e === "string") return h("li", null, e);
+      var url = safeUrl(e.url);
+      return h("li", null, url ? h("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, e.label || url) : (e.label || ""));
+    }));
+  }
+  function section(id, n, title, sub) {
+    var s = h("section", { id: id }, h("div", { class: "wrap" },
+      h("span", { class: "num" }, n), h("h2", null, title), sub ? h("p", { class: "sub" }, sub) : null));
+    app.appendChild(s);
+    return s.firstChild;
+  }
+
+  var meta = data.meta || {};
+  var repoUrl = safeUrl(meta.url);
+  app.appendChild(h("div", { class: "hero" }, h("div", { class: "wrap" },
+    h("p", { class: "kicker" }, "Architecture X-ray"),
+    h("h1", null, meta.name || ""),
+    h("p", { class: "tagline" }, meta.tagline || ""),
+    h("p", { class: "thesis" }, data.thesis || ""),
+    h("div", { class: "stats" }, (data.stats || []).map(function (s) {
+      return h("div", { class: "stat" }, h("b", null, s.value), h("span", null, s.label));
+    })),
+    h("p", { class: "meta" },
+      repoUrl ? h("a", { href: repoUrl, target: "_blank", rel: "noopener noreferrer" }, repoUrl.replace("https://", "")) : null,
+      repoUrl ? " · " : "", "commit " + String(meta.commit || "").slice(0, 10), " · analysed " + (meta.analysed_at || ""))
+  )));
+
+  var links = [["patterns", "Patterns"], ["diagrams", "Diagrams"]];
+  if ((data.modules || []).length) links.push(["modules", "Modules"]);
+  links.push(["decisions", "Decisions"], ["evolution", "Evolution"], ["assessment", "Assessment"]);
+  if ((data.takeaways || []).length) links.push(["takeaways", "Takeaways"]);
+  app.appendChild(h("nav", null, h("div", { class: "wrap" }, links.map(function (l) { return h("a", { href: "#" + l[0] }, l[1]); }))));
+
+  var n = 0;
+  function next() { n += 1; return (n < 10 ? "0" : "") + n; }
+
+  var sec = section("patterns", next(), "Architecture at a glance", "The styles and patterns that shape this codebase, with where to see each one.");
+  sec.appendChild(h("div", { class: "grid g3" }, (data.patterns || []).map(function (p) {
+    return h("div", { class: "card" }, h("span", { class: "tag" }, p.kind || "pattern"), h("h3", null, p.name), h("p", null, p.summary), evidence(p.evidence));
+  })));
+
+  sec = section("diagrams", next(), "The system, drawn", "C4-style views from the outside in. Arrows read as “uses” or “sends to”.");
+  sec.appendChild(h("div", { class: "legend" },
+    [["--d-person", "Person"], ["--d-system", "This system"], ["--d-component", "Component"], ["--d-store", "Data store"], ["--d-queue", "Queue / stream"], ["--d-ext", "External"]].map(function (l) {
+      return h("span", null, h("i", { style: "background:var(" + l[0] + ")" }), l[1]);
+    })));
+  var canvases = [];
+  (data.diagrams || []).forEach(function (d) {
+    var canvas = h("div", { class: "canvas" }, h("pre", null, d.mermaid));
+    canvases.push([canvas, d.mermaid]);
+    sec.appendChild(h("div", { class: "card diagram" },
+      h("header", null, h("span", { class: "tag" }, d.level), h("h3", null, d.title), d.caption ? h("p", null, d.caption) : null),
+      canvas,
+      h("details", { class: "src" }, h("summary", null, "Diagram source (Mermaid)"), h("pre", null, document.createTextNode(d.mermaid)))));
+  });
+
+  if ((data.modules || []).length) {
+    sec = section("modules", next(), "Module map", "Where things live.");
+    sec.appendChild(h("div", { class: "card tablewrap" }, h("table", null,
+      h("thead", null, h("tr", null, h("th", null, "Path"), h("th", null, "Role"), h("th", null, "Notes"))),
+      h("tbody", null, data.modules.map(function (m) {
+        return h("tr", null, h("td", null, h("code", null, document.createTextNode(m.path))), h("td", null, m.role), h("td", null, m.notes || ""));
+      })))));
+  }
+
+  sec = section("decisions", next(), "Key design decisions", "What was chosen, why, and what it cost. Each is marked by how the reasoning is known.");
+  sec.appendChild(h("div", { class: "legend" },
+    h("span", null, h("span", { class: "tag documented" }, "documented"), " stated by the maintainers"),
+    h("span", null, h("span", { class: "tag inferred" }, "inferred"), " read from the code and history"),
+    h("span", null, h("span", { class: "tag speculative" }, "speculative"), " plausible, not evidenced")));
+  (data.decisions || []).forEach(function (d, i) {
+    sec.appendChild(h("div", { class: "card decision" },
+      h("div", { class: "idx" }, (i < 9 ? "0" : "") + (i + 1)),
+      h("div", null,
+        h("div", { class: "tags" }, h("span", { class: "tag " + d.confidence }, d.confidence), d.when ? h("span", { class: "when" }, d.when) : null),
+        h("h3", null, d.title),
+        h("dl", null,
+          h("dt", null, "Decision"), h("dd", null, d.decision),
+          h("dt", null, "Why"), h("dd", null, d.why),
+          h("dt", null, "Trade-off"), h("dd", null, d.tradeoff),
+          d.alternatives ? h("dt", null, "Instead of") : null, d.alternatives ? h("dd", null, d.alternatives) : null),
+        evidence(d.evidence))));
+  });
+
+  sec = section("evolution", next(), "How the architecture evolved", "The turning points, in order, and what drove each one.");
+  sec.appendChild(h("div", { class: "timeline" }, (data.evolution || []).map(function (e) {
+    return h("div", { class: "era card" },
+      h("span", { class: "period" }, e.period), h("h3", null, e.title), h("p", null, e.summary),
+      (e.changes || []).length ? h("ul", null, e.changes.map(function (c) { return h("li", null, c); })) : null,
+      e.why ? h("div", { class: "why" }, h("b", null, "What drove it"), h("span", null, e.why)) : null,
+      evidence(e.evidence));
+  })));
+
+  var a = data.assessment || {};
+  sec = section("assessment", next(), "Assessment", "What this architecture does well, and what to watch.");
+  sec.appendChild(h("div", { class: "grid g2" },
+    h("div", { class: "col s" }, h("h3", { class: "head" }, "Strengths"), (a.strengths || []).map(function (p) { return h("div", { class: "point" }, h("h4", null, p.title), h("p", null, p.detail)); })),
+    h("div", { class: "col r" }, h("h3", { class: "head" }, "Risks and costs"), (a.risks || []).map(function (p) { return h("div", { class: "point" }, h("h4", null, p.title), h("p", null, p.detail)); }))));
+
+  if ((data.takeaways || []).length) {
+    sec = section("takeaways", next(), "What to take from it", "Lessons that transfer to other systems.");
+    sec.appendChild(h("div", { class: "card" }, h("ol", { class: "takeaways" }, data.takeaways.map(function (t) { return h("li", null, t); }))));
+  }
+
+  var method = data.method || {};
+  app.appendChild(h("footer", null, h("div", { class: "wrap" },
+    h("strong", null, "Method and limits"),
+    method.scope ? h("p", null, method.scope) : null,
+    h("ul", null, (method.limits || []).concat([
+      "This is an independent reading of a public codebase at one commit. Reasoning marked inferred or speculative is the analyst’s interpretation, not a statement by the maintainers."
+    ]).map(function (l) { return h("li", null, l); })),
+    h("p", { class: "gen" }, "Generated with architect:xray, a Claude Code plugin."))));
+
+  // Diagrams. Colours come from the page's CSS variables so both themes work.
+  var css = getComputedStyle(document.documentElement);
+  function v(name) { return css.getPropertyValue(name).trim(); }
+  var classDefs = "\n" + [
+    "classDef person fill:" + v("--d-person") + ",stroke:" + v("--d-person") + ",color:" + (matchMedia("(prefers-color-scheme: dark)").matches ? v("--d-on-light") : v("--d-on")),
+    "classDef system fill:" + v("--d-system") + ",stroke:" + v("--d-system") + ",color:" + v("--d-on"),
+    "classDef component fill:" + v("--d-component") + ",stroke:" + v("--d-component") + ",color:" + (matchMedia("(prefers-color-scheme: dark)").matches ? v("--d-on") : v("--d-on-light")),
+    "classDef external fill:" + v("--d-ext") + ",stroke:" + v("--d-ext") + ",color:" + v("--d-on"),
+    "classDef store fill:" + v("--d-store") + ",stroke:" + v("--d-store") + ",color:" + v("--d-on"),
+    "classDef queue fill:" + v("--d-queue") + ",stroke:" + v("--d-queue") + ",color:" + v("--d-on")
+  ].join("\n") + "\n";
+
+  function fail(canvas, msg) { canvas.insertBefore(h("p", { class: "note" }, msg), canvas.firstChild); }
+  if (!window.mermaid) {
+    canvases.forEach(function (c) { fail(c[0], "Diagram renderer could not be loaded (offline?). Source shown instead."); });
+    return;
+  }
+  window.mermaid.initialize({
+    startOnLoad: false, securityLevel: "strict", theme: "base",
+    themeVariables: {
+      fontFamily: v("--sans"), fontSize: "14px", background: "transparent",
+      primaryColor: v("--d-system"), primaryTextColor: v("--d-on"), primaryBorderColor: v("--d-system"),
+      lineColor: v("--d-line"), textColor: v("--ink"), mainBkg: v("--d-system"),
+      clusterBkg: v("--d-group"), clusterBorder: v("--d-group-line"), titleColor: v("--ink"),
+      edgeLabelBackground: v("--surface-2"), nodeTextColor: v("--d-on"),
+      actorBkg: v("--d-system"), actorBorder: v("--d-system"), actorTextColor: v("--d-on"), actorLineColor: v("--d-line"),
+      signalColor: v("--ink"), signalTextColor: v("--ink"), labelBoxBkgColor: v("--surface"), labelBoxBorderColor: v("--d-group-line"),
+      labelTextColor: v("--ink"), loopTextColor: v("--ink"), noteBkgColor: v("--warn-soft"), noteTextColor: v("--ink"), noteBorderColor: v("--d-group-line"),
+      activationBkgColor: v("--accent-soft"), activationBorderColor: v("--d-line"), sequenceNumberColor: v("--d-on")
+    },
+    flowchart: { curve: "basis", useMaxWidth: true, padding: 14, nodeSpacing: 46, rankSpacing: 58 },
+    sequence: { useMaxWidth: true, mirrorActors: false, wrap: true }
+  });
+  canvases.reduce(function (chain, c, i) {
+    return chain.then(function () {
+      var code = c[1];
+      if (/^\s*(flowchart|graph)\b/.test(code)) code += classDefs;
+      return window.mermaid.render("xray-diagram-" + i, code).then(function (out) {
+        c[0].innerHTML = out.svg;
+      }).catch(function (err) {
+        fail(c[0], "This diagram could not be rendered: " + String(err && err.message || err).split("\n")[0]);
+        var stray = document.getElementById("dxray-diagram-" + i); if (stray) stray.remove();
+      });
+    });
+  }, Promise.resolve());
+})();
+</script>
+</body>
+</html>
