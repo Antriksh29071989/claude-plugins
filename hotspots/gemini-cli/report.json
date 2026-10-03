@@ -1,0 +1,181 @@
+{
+ "meta": {
+  "name": "gemini-cli",
+  "url": "https://github.com/google-gemini/gemini-cli",
+  "analysed_at": "2026-10-03",
+  "hook": "63 files absorb 38% of every change, and three of the top six are configuration.",
+  "site_url": "https://antriksh29071989.github.io/claude-plugins/hotspots/gemini-cli/"
+ },
+ "thesis": "Over the last 12 months, 5% of gemini-cli's source files took 38% of all changes. The heat sits in two places: configuration, where adding one setting means editing three large files, and the two modules that run the interactive session. The top hotspots have also roughly tripled in size over the window, so the cost of each change there is rising.",
+ "findings": [
+  {
+   "title": "Change is concentrated in very few files",
+   "detail": "13 files (1%) take 18% of all file changes and 63 files (5%) take 38%. Refactoring effort spent anywhere else in the 1,259 source files buys much less."
+  },
+  {
+   "title": "Configuration is the hottest code in the repository",
+   "detail": "Three of the top six hotspots are configuration files. `packages/core/src/config/config.ts` alone is touched by 9.6% of all commits, and it changes in the same commit as the CLI settings schema 127 times."
+  },
+  {
+   "title": "The top hotspots are growing fast",
+   "detail": "`config.ts` went from about 1,000 to 3,800 lines in the window and `settingsSchema.ts` from 1,100 to 3,600. Both more than tripled in complexity. They are getting hotter, not cooling."
+  },
+  {
+   "title": "Shell execution is where the fixes cluster",
+   "detail": "38 of the 66 commits to `shellExecutionService.ts` have fix-style subjects, the highest share in the top ten. Sandbox, PTY and environment handling meet in one 1,900-line file."
+  },
+  {
+   "title": "Three sandbox implementations move in lockstep",
+   "detail": "The Linux, macOS and Windows sandbox managers change together in up to 76% of their commits, which suggests shared logic is being edited three times."
+  }
+ ],
+ "diagnoses": [
+  {
+   "path": "packages/cli/src/config/settingsSchema.ts",
+   "role": "The declarative schema for every user-facing setting: type, default, label, description and whether it shows in the settings dialog.",
+   "why_hot": "It is a registry, so every new feature or flag adds an entry: 126 of its 229 commits are features. At 3,590 lines with about 265 dialog entries in one nested object literal, it scores highest on complexity because of deep nesting, not logic.",
+   "recommendation": "Split the schema by settings category (ui, tools, model, security, experimental and so on) into one file each, and compose them in a small index. Changes then land in a 200-line file and stop colliding.",
+   "first_step": "Move the largest category out into its own module behind the existing export and check that the generated `schemas/settings.schema.json` is byte-identical.",
+   "risk_if_ignored": "With 64 authors editing one object literal, merge conflicts and misplaced settings grow with every feature.",
+   "effort": "S",
+   "evidence": [
+    "126 of its 229 commits in the window are typed `feat`",
+    "About 265 `showInDialog` entries in one exported object",
+    "Changes with `packages/core/src/config/config.ts` in 127 commits"
+   ]
+  },
+  {
+   "path": "packages/core/src/config/config.ts",
+   "role": "The runtime `Config` object that almost every part of core reads its dependencies and settings from.",
+   "why_hot": "New capabilities are wired in by adding a field, a constructor line and a getter here: `ConfigParameters` has about 147 fields and the class about 173 private members. It is the most-changed file in the window (366 commits, 81 authors) and grew from about 1,000 to 3,800 lines.",
+   "recommendation": "Stop adding to it and split by concern. Group related fields into small typed sub-configs (model, sandbox, telemetry, tools, context) owned by their subsystems, and pass those to consumers. The `AgentLoopContext` interface already in the codebase is the place for per-agent state.",
+   "first_step": "Pick one cohesive group, for example the telemetry fields and getters, and extract it into its own object that `Config` holds and exposes. Measure how many call sites change.",
+   "risk_if_ignored": "Every feature keeps touching the same file, so nearly one commit in ten conflicts with or depends on another, and the class is hard to construct in tests.",
+   "effort": "L",
+   "evidence": [
+    "366 commits in 12 months, 9.6% of all commits",
+    "162 of its commits are typed `feat`; 102 have fix-style subjects",
+    "`ConfigParameters` interface with about 147 fields",
+    "Complexity up 347% over the window (845 to 3,778)"
+   ]
+  },
+  {
+   "path": "packages/cli/src/ui/AppContainer.tsx",
+   "role": "The root React component of the terminal UI: it owns session state and wires hooks, contexts and dialogs together.",
+   "why_hot": "Almost every interactive feature needs state here, so it collects it: about 150 React hook calls in one component. 82 of its 213 commits are typed features and 66 have fix-style subjects.",
+   "recommendation": "Extract cohesive slices of state into dedicated hooks or context providers (dialogs, input queueing, notifications, session lifecycle) so the container composes them and holds no logic of its own.",
+   "first_step": "Move one self-contained slice, such as message queueing, into its own hook with tests, leaving the returned values unchanged.",
+   "risk_if_ignored": "Subtle ordering bugs between effects become more likely as the hook count grows; several fix commits in the window are of that kind.",
+   "effort": "M",
+   "evidence": [
+    "213 commits from 62 authors",
+    "About 150 `useState`, `useRef`, `useEffect`, `useCallback` and `useMemo` calls",
+    "Sample fix: 'Fix bug where tool scheduler was repeatedly created'"
+   ]
+  },
+  {
+   "path": "packages/cli/src/ui/hooks/useGeminiStream.ts",
+   "role": "The React hook that runs the interactive agent loop: sends prompts, handles each stream event, schedules tools and sends results back.",
+   "why_hot": "It mixes protocol handling with UI state in one 2,100-line hook, so both model-side and UI-side changes land here. 35 of its 91 commits have fix-style subjects, including race-condition fixes around tool scheduling.",
+   "recommendation": "Finish moving the loop into core. The repository already has `useAgentStream` and `AgentSession` for this; once the interactive path uses them by default, this hook can shrink to rendering events.",
+   "first_step": "Enable the agent-session path for interactive mode behind its existing setting in CI and track the behavioural differences as a checklist.",
+   "risk_if_ignored": "The same loop logic keeps being fixed separately here and in the other front ends.",
+   "effort": "L",
+   "evidence": [
+    "91 commits, 35 with fix-style subjects",
+    "18 stream event cases handled in one hook",
+    "Sample fix: 'Fix race condition by awaiting scheduleToolCalls'"
+   ]
+  },
+  {
+   "path": "packages/cli/src/ui/components/InputPrompt.tsx",
+   "role": "The prompt input box: editing, key handling, completions, paste handling, voice and command suggestions.",
+   "why_hot": "Each new input behaviour (voice mode, paste placeholders, scrollbar, rewind, copy mode) adds branches to one component. It has the deepest nesting among the UI files and one author holds 26% of its changes.",
+   "recommendation": "Separate key handling from rendering: move the key-dispatch logic into a reducer or a keymap table that can be unit-tested without rendering, and keep the component for layout.",
+   "first_step": "Extract the keypress handler into a pure function that takes state and a key and returns an action, with tests for the existing bindings.",
+   "risk_if_ignored": "Key-handling regressions; the window already contains a revert in this file.",
+   "effort": "M",
+   "evidence": [
+    "90 commits: 31 typed `feat`, 33 with fix-style subjects, one revert",
+    "1,774 lines, complexity up 61% over the window",
+    "Sample: 'revert(cli): bring back input box and footer visibility in copy mode'"
+   ]
+  },
+  {
+   "path": "packages/cli/src/config/config.ts",
+   "role": "Builds the core `Config` from command-line arguments and merged settings.",
+   "why_hot": "It is the translation layer between the settings schema and the core `Config`, so it changes whenever either side does: 199 commits, and it shares 113 of them with the core config file.",
+   "recommendation": "Derive the mapping from the schema where settings pass through unchanged, so only settings that need real logic are written by hand.",
+   "first_step": "List the settings that are copied straight through and replace them with one generated mapping.",
+   "risk_if_ignored": "A setting added in the schema but not mapped here silently does nothing.",
+   "effort": "M",
+   "evidence": [
+    "199 commits from 67 authors",
+    "Changes with `packages/core/src/config/config.ts` in 113 commits"
+   ]
+  },
+  {
+   "path": "packages/core/src/core/geminiChat.ts",
+   "role": "Chat history management, streaming, retries and response validation for the model API.",
+   "why_hot": "It is fix-driven: 40 of its 85 commits have fix-style subjects, against 25 typed as features. Many concern malformed streams, retries and history ordering that the API rejects. It nearly tripled in size in the window.",
+   "recommendation": "Separate history curation and validation from transport and retry into two modules, and pin the API edge cases as table-driven tests.",
+   "first_step": "Extract the history validation and coalescing functions, which are already free functions at the top of the file, into their own module.",
+   "risk_if_ignored": "Each API-behaviour fix risks regressing another because the cases are interleaved.",
+   "effort": "M",
+   "evidence": [
+    "85 commits, 40 with fix-style subjects",
+    "Complexity up 247% over the window",
+    "Sample fix: 'group cancelled tool responses and coalesce consecutive roles to prevent 400 Bad Request'"
+   ]
+  },
+  {
+   "path": "packages/core/src/services/shellExecutionService.ts",
+   "role": "Runs shell commands for the agent through a PTY or child process, with sandboxing, environment sanitisation and output handling.",
+   "why_hot": "It has the highest share of fixes in the top ten: 38 of 66 commits. Platform differences, sandbox integration, secrets redaction and memory use all meet here.",
+   "recommendation": "Split by execution backend (PTY and child-process fallback) behind one interface, and move environment preparation and output buffering into separate units with their own tests.",
+   "first_step": "Add characterisation tests for the two backends' exit and close behaviour, which recent fixes touched, before moving code.",
+   "risk_if_ignored": "This is security-sensitive code; a regression here can be a sandbox or secrets-handling bug, not only a crash.",
+   "effort": "M",
+   "evidence": [
+    "66 commits, 38 with fix-style subjects",
+    "Sample fix: 'use close event instead of exit in child_process fallback'",
+    "Sample fix: 'batch macOS seatbelt rules into a profile file to prevent ARG_MAX errors'"
+   ]
+  }
+ ],
+ "coupling_notes": [
+  {
+   "a": "packages/cli/src/config/settingsSchema.ts",
+   "b": "packages/core/src/config/config.ts",
+   "explanation": "Adding a setting means declaring it in the CLI schema and again as a field and getter in core.",
+   "action": "A single source for setting definitions would remove this pair."
+  },
+  {
+   "a": "packages/cli/src/config/config.ts",
+   "b": "packages/core/src/config/config.ts",
+   "explanation": "The CLI loader hand-maps settings onto the core constructor, so the two change together.",
+   "action": "Generate the pass-through mapping."
+  },
+  {
+   "a": "packages/core/src/sandbox/linux/LinuxSandboxManager.ts",
+   "b": "packages/core/src/sandbox/windows/WindowsSandboxManager.ts",
+   "explanation": "Platform implementations of one interface that change together in three commits out of four.",
+   "action": "Pull the shared policy logic into a common base so platform files hold only platform code."
+  }
+ ],
+ "plan": [
+  "Split `settingsSchema.ts` by category. It is the top-scoring file, the change is mechanical, and the generated JSON schema gives an exact before-and-after check.",
+  "Freeze growth of the core `Config`: agree that new state goes into a sub-config or `AgentLoopContext`, and extract one group (telemetry is a good candidate) to prove the pattern.",
+  "Generate the pass-through part of the CLI-to-core settings mapping, which removes two of the strongest coupling pairs.",
+  "Add characterisation tests around `shellExecutionService.ts` before any restructuring; it is the fix-heaviest and most security-sensitive hotspot.",
+  "Make the core-owned agent session the default for interactive mode, so `useGeminiStream.ts` and `AppContainer.tsx` can shed loop logic."
+ ],
+ "method": {
+  "scope": "12 months of history to commit fb972b2 (3,818 non-merge commits). The eight diagnosed files were examined through their commit history in the window and their structure; recommendations were not prototyped.",
+  "limits": [
+   "Fix counts use commit-subject keywords (fix, bug, revert, regression and similar), so they undercount fixes with other wording and overcount commits that merely mention a fix.",
+   "Effort ratings (S, M, L) are rough judgments, not estimates from the maintainers.",
+   "Some growth in the largest files may reflect features intentionally consolidated there; the trend is measured, the interpretation is not confirmed."
+  ]
+ }
+}

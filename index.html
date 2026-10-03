@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Architecture X-rays</title>
+<title>Codebase case studies</title>
 <meta name="description" content="Architecture case studies of open-source projects, generated with the architect plugin for Claude Code.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Architecture X-rays">
@@ -49,20 +49,26 @@ code { font: .9em var(--mono); }
 </head>
 <body>
 <div class="hero"><div class="wrap">
-  <p class="kicker">Architecture X-ray</p>
+  <p class="kicker">Codebase case studies</p>
   <h1>How well-known codebases are actually built</h1>
-  <p>Case studies of open-source projects: the patterns they use, the design decisions that shaped them and why, and how the architecture evolved. Generated from the code and git history with the <a href="https://github.com/Antriksh29071989/claude-plugins">architect plugin</a> for Claude Code.</p>
+  <p>Case studies of open-source projects: the patterns they use, the design decisions that shaped them and why, and how the architecture evolved. Also: where their tech debt concentrates. Generated from the code and git history with <a href="https://github.com/Antriksh29071989/claude-plugins">open-source plugins</a> for Claude Code.</p>
 </div></div>
 <main><div class="wrap"><div class="grid">
   <a class="card" href="xray/gemini-cli/">
-    <h2>gemini-cli</h2>
+    <h2>gemini-cli: architecture X-ray</h2>
     <p>Google's terminal coding agent: a headless engine with five front ends, and a year spent pulling the agent loop and tool safety back into the core.</p>
     <span>6,462 commits &middot; TypeScript &middot; analysed 2026-10-03</span><br>
     <b>Read the X-ray &rarr;</b>
   </a>
+  <a class="card" href="hotspots/gemini-cli/">
+    <h2>gemini-cli: tech-debt hotspots</h2>
+    <p>Where the change effort goes: 63 files absorb 38% of every change, and three of the top six are configuration.</p>
+    <span>3,818 commits in 12 months &middot; 1,259 source files &middot; analysed 2026-10-03</span><br>
+    <b>See the hotspot map &rarr;</b>
+  </a>
 </div></div></main>
 <footer><div class="wrap">
-  Each page is an independent reading of a public codebase at one commit. Run your own: <code>/architect:xray &lt;repo&gt;</code>.
+  Each page is an independent reading of a public codebase at one commit. Run your own: <code>/architect:xray &lt;repo&gt;</code> or <code>/hotspots:map &lt;repo&gt;</code>.
 </div></footer>
 </body>
 </html>

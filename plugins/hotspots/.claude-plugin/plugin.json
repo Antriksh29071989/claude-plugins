@@ -1,0 +1,15 @@
+{
+  "name": "hotspots",
+  "version": "0.1.0",
+  "description": "Find and prioritise tech debt. /hotspots:map measures churn and complexity from git history and produces an HTML report: a heat map of the codebase, a diagnosis of each top hotspot with a recommended fix, hidden coupling between files, and an ordered plan.",
+  "author": {
+    "name": "Antriksh"
+  },
+  "keywords": [
+    "tech-debt",
+    "hotspots",
+    "refactoring",
+    "code-quality",
+    "git-history"
+  ]
+}

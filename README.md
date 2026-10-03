@@ -1,6 +1,12 @@
 # claude-plugins
 
-Plugins for [Claude Code](https://claude.com/claude-code). The first one is **architect**: point it at any repository and get an architecture case study, or give it a problem and get designs to choose from.
+Plugins for [Claude Code](https://claude.com/claude-code) that read a codebase and its git history and hand you something you can act on.
+
+| Plugin | Command | What you get |
+|---|---|---|
+| [architect](plugins/architect) | `/architect:xray <repo>` | An architecture case study: patterns, key design decisions and why, how it evolved. [Example](https://antriksh29071989.github.io/claude-plugins/xray/gemini-cli/) |
+| [architect](plugins/architect) | `/architect:design <problem>` | 2-3 contrasting designs with C4 diagrams and a recommendation. [Example](docs/architecture/production-react-agent/README.md) |
+| [hotspots](plugins/hotspots) | `/hotspots:map <repo>` | A tech-debt heat map: where change and complexity overlap, why, and what to fix first. [Example](https://antriksh29071989.github.io/claude-plugins/hotspots/gemini-cli/) |
 
 [![gemini-cli Architecture X-ray](docs/images/xray-card.png)](https://antriksh29071989.github.io/claude-plugins/xray/gemini-cli/)
 
@@ -13,6 +19,7 @@ In Claude Code:
 ```
 /plugin marketplace add Antriksh29071989/claude-plugins
 /plugin install architect@antriksh-plugins
+/plugin install hotspots@antriksh-plugins
 ```
 
 Then:
@@ -62,6 +69,18 @@ A module map, strengths and risks, transferable lessons, and a method section th
 ### A share card
 
 Each build writes a 1200×630 `card.png` (the image at the top of this README) and puts link-preview tags in the page, so a published X-ray unfurls with an image on LinkedIn, Slack and similar.
+
+## What `/hotspots:map` gives you
+
+The output for the same repository over its last 12 months: [gemini-cli hotspot map](https://antriksh29071989.github.io/claude-plugins/hotspots/gemini-cli/).
+
+[![gemini-cli hotspot map](docs/images/hotspots-card.png)](https://antriksh29071989.github.io/claude-plugins/hotspots/gemini-cli/)
+
+A heat map of every source file, sized by lines of code and coloured by hotspot score (how often it changed multiplied by how complex it is):
+
+![Heat map of the codebase](docs/images/hotspots-map.png)
+
+Then each top hotspot is diagnosed: why it keeps changing, one specific refactoring, a first step and an effort rating. The numbers come from a script, not the model; see the [plugin README](plugins/hotspots/README.md) for the method and its limits.
 
 ## Usage
 
@@ -126,6 +145,10 @@ plugins/architect/
   skills/xray/                      # SKILL.md, scripts/, assets/, references/
   skills/design/                    # SKILL.md, references/
   agents/industry-researcher.md     # subagent used by design
+plugins/hotspots/
+  .claude-plugin/plugin.json        # plugin manifest
+  skills/map/                       # SKILL.md, scripts/, assets/, references/
+hotspots/                           # published hotspot maps (served by GitHub Pages)
 xray/                               # published X-rays (served by GitHub Pages)
 docs/architecture/                  # example design output
 index.html                          # gallery page for GitHub Pages

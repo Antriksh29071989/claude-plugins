@@ -10,6 +10,12 @@
       "description": "Software architecture toolkit. /architect:design proposes 2-3 contrasting designs for a problem with C4 diagrams, grounded in the architecture literature and industry precedent. /architect:xray reverse-engineers an existing repository into an HTML case study: patterns, key design decisions and why, and how the architecture evolved.",
       "source": "./plugins/architect",
       "category": "development"
+    },
+    {
+      "name": "hotspots",
+      "description": "Find and prioritise tech debt. /hotspots:map measures churn and complexity from git history and produces an HTML report: a heat map of the codebase, a diagnosis of each top hotspot with a recommended fix, hidden coupling between files, and an ordered plan.",
+      "source": "./plugins/hotspots",
+      "category": "development"
     }
   ]
 }
